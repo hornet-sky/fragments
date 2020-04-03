@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>sse</title>
+</head>
+<body>
+    <button onclick="closeConn()">关闭连接</button>
+    <ul id="result-ul"></ul>
+    <script src="./eventsource-polyfill.js"></script> <!-- 让Edge支持SSE。而IE11仍然不支持 -->
+    <script>
+      if (!window.EventSource) {
+    	  alert('当前的浏览器不支持 Server-Sent Events')
+      } else {
+    	  const ul = document.querySelector('#result-ul')
+          const eventSource = new EventSource('http://127.0.0.1:8089/sse/push_msg')
+          console.log('EventSource实例对象创建完毕', eventSource.readyState, eventSource) // 0
+          eventSource.onopen = function (event) {
+              console.log('onopen - ', eventSource.readyState, event) // 1
+          }
+
+          eventSource.onmessage = function (event) {
+              console.log('onmessage - ', eventSource.readyState, event) // 1
+              ul.innerHTML += event.data + '<br>'
+          }
+
+          eventSource.addEventListener("closenow", function(event) { // 1 closenow是自定义事件
+              console.log('closenow - ', eventSource.readyState, event)
+              eventSource.close()
+              alert('执行了服务器端发来的关闭命令')
+          });
+            
+          eventSource.onerror = function (event) {
+              console.log('onerror - ', eventSource.readyState, event) // 0
+              // eventSource.close(); 主动关闭之后就不会触发重连了
+          }
+          
+          function closeConn () {
+              eventSource.close()
+              console.log('手动关闭了连接', eventSource.readyState, eventSource) // 2
+          }
+      }
+      /* eventSource.readyState
+        0，相当于常量EventSource.CONNECTING，表示连接还未建立，或者连接断线。
+
+　　1，相当于常量EventSource.OPEN，表示连接已经建立，可以接受数据。
+
+　　2，相当于常量EventSource.CLOSED，表示连接已断，且不会重连。
+      */
+    </script>
+</body>
+</html>
